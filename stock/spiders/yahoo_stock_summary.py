@@ -35,7 +35,7 @@ class YahooStockSummarySpider(scrapy.Spider):
                 name = response.xpath(xpath_base%(div_ix,tr_ix,1)).extract_first()
                 value = response.xpath(xpath_base%(div_ix,tr_ix,2)).extract_first()
                 if name:
-                    name = '"%s"'%name.strip()
+                    name = name.strip()
                     item[name] = value.strip()
         item['Timestamp'] = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return item

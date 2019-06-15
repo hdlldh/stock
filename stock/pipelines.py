@@ -30,36 +30,54 @@ class SQLiteStoreItemPipeline(object):
         self.table_name['yahoo_stock_summary'] = 'summary'
         self.table_name['yahoo_stock_statistics'] = 'statistics'
 
- 
-    def process_item(self, item, spider):
-
-        if spider.name not in self.table_name:
-            return item
+    def create_table(self, table_name, keys):
         try:
-            keys = ','.join(item.keys())
-            question_marks = ','.join(list('?'*len(item)))
-            values = tuple(item.values())
-            query = 'INSERT or REPLACE INTO '+self.table_name[spider.name]+' ('+keys+') VALUES ('+question_marks+')'
-            #print query
+            query = """CREATE TABLE IF NOT EXISTS %s (%s, Primary Key (Symbol, EventDate))
+                """ % (table_name, ', '.join(['%s text' % k for k in keys]))
+            self.conn.execute(query)
+            self.conn.commit()
+            print(query)
+            print('Succeed to create table: %s'%table_name)
+            return 0
+        except Exception as e:
+            print('Failed to create table: %s'%table_name)
+            print(query)
+            print("Error: %s"%type(e).__name__)
+            return 1
+
+    def insert_data(self, table_name, values):
+        try:
+            question_marks = ', '.join(['?'] * len(values))
+            query = 'INSERT or REPLACE INTO %s VALUES (%s)' % (table_name, question_marks)
             cur = self.conn.cursor()
             cur.execute(query, values)
             self.conn.commit()
-            #ser_item = pd.Series(item)
-            #ser_item.to_sql('profile',self.conn,if_exists='append')
-            print('Succeed to insert item: ' + item['Symbol'])
-        except:
-            try:
-                create_query = """CREATE TABLE IF NOT EXISTS %s
-                     (%s, Primary Key (Symbol, EventDate))
-                     """%(self.table_name[spider.name],','.join(['%s text'%k for k in item.keys()]))
-                print(create_query)
-                self.conn.execute(create_query)
-                self.conn.commit()
-                cur = self.conn.cursor()
-                cur.execute(query, values)
-                self.conn.commit()
-            except:
-                print('Failed to insert item: ' + item['Symbol'])
+            print('Succeed to insert the item.')
+            return 0
+        except Exception as e:
+            print('Failed to insert the item.')
+            print(query)
+            print(values)
+            print("Error: %s" % type(e).__name__)
+            return 1
+
+    def process_item(self, item, spider):
+        if spider.name not in self.table_name:
+            return item
+        keys = []
+        values = []
+        for k, v in item.items():
+            keys.append('"%s"'%k)
+            values.append(v)
+
+        table_name = self.table_name[spider.name]
+
+        rst = self.insert_data(table_name, values)
+        if rst:
+            self.create_table(table_name, keys)
+            self.insert_data(table_name, values)
+
         return item
+
 
 

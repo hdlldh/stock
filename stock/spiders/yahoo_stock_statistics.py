@@ -40,20 +40,20 @@ class YahooStockStatisticsSpider(scrapy.Spider):
             name = response.xpath(xpath_base0%(tr_ix,1)).extract_first()
             value = response.xpath(xpath_base0%(tr_ix,2)).extract_first()
             if name:
-                name = '"%s"'%name.strip()
+                name = name.strip()
                 item[name] = value.strip()
         for div_ix in range(1,10):
             for tr_ix in range(1,10):
                 name = response.xpath(xpath_base1%(div_ix,tr_ix,1)).extract_first()
                 value = response.xpath(xpath_base1%(div_ix,tr_ix,2)).extract_first()
                 if name:
-                    name = '"%s"'%name.strip()
+                    name = name.strip()
                     item[name] = value.strip()
 
                 name = response.xpath(xpath_base2%(div_ix,tr_ix,1)).extract_first()
                 value = response.xpath(xpath_base2%(div_ix,tr_ix,2)).extract_first()
                 if name:
-                    name = '"%s"'%name.strip()
+                    name = name.strip()
                     item[name] = value.strip()
         item['Timestamp'] = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return item
